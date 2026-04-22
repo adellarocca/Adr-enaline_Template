@@ -1,0 +1,25 @@
+{
+  "name": "Adr-enaline Game",
+  "short_name": "Adr-enaline",
+  "description": "Responsive web game created with Phaser 4 and TypeScript, built using Vite.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "portrait-primary",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "assets/ui/logo_adr-enaline_vintage.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/ui/logo_adr-enaline_vintage.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
