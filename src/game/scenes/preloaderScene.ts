@@ -9,11 +9,8 @@ export default class PreloaderScene extends Phaser.Scene {
     }; 
     
     preload() {
-        // Resolve assets base against Vite base URL (supports hosting under subpaths).
-        // Note: Vite can set BASE_URL to './' (relative) when base: './'
-        const appBase = new URL(import.meta.env.BASE_URL || '/', globalThis.location.href);
-        const assetsBase = (import.meta.env.VITE_APP_ASSETS_BASE_URL || 'assets/').replace(/^\/?/, '');
-        this.load.baseURL = new URL(assetsBase, appBase).toString();
+        const assetsBase = (import.meta.env.VITE_APP_ASSETS_BASE_URL as string) || 'assets/';
+        this.load.baseURL = `${import.meta.env.BASE_URL}${assetsBase}`;
 
 		this.add.sprite(0, 0, 'background').setOrigin(0, 0);
         var logoAdrenaline = this.add.sprite(GameParameters.worldParameters.centerX, GameParameters.worldParameters.centerY-100, 'logo');
