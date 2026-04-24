@@ -16,7 +16,11 @@ export default class BootScene extends Phaser.Scene {
     };
 
     preload() {
-        this.load.baseURL = import.meta.env.VITE_APP_ASSETS_BASE_URL as string;
+        // Resolve assets base against Vite base URL (supports hosting under subpaths).
+        // Note: Vite can set BASE_URL to './' (relative) when base: './'
+        const appBase = new URL(import.meta.env.BASE_URL || '/', globalThis.location.href);
+        const assetsBase = (import.meta.env.VITE_APP_ASSETS_BASE_URL || 'assets/').replace(/^\/?/, '');
+        this.load.baseURL = new URL(assetsBase, appBase).toString();
         this.load.image('background', 'background/background.png');
         this.load.image('logo', 'ui/adr-enaline_Logo.png');
         this.load.image('loading-background', 'ui/loading-background.png');

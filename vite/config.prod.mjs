@@ -39,9 +39,9 @@ export default defineConfig({
         navigateFallback: 'index.html',
 
         runtimeCaching: [
-          // ✔️ assets Phaser (public/assets)
+          // ✔️ assets Phaser (public/assets), even when hosted under a subpath (e.g. /mygame/assets/*)
           {
-            urlPattern: ({ url }) => url.pathname.startsWith('/assets/'),
+            urlPattern: ({ url }) => url.pathname.includes('/assets/'),
             handler: 'CacheFirst',
             options: {
               cacheName: 'game-assets',
