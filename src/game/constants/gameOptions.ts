@@ -1,3 +1,6 @@
+/** Single source of truth for the general game / UI accent (Phaser APIs use numbers; text/CSS-style APIs use hex strings). */
+export const ACCENT_TINT = 0xd63384;
+
 export const GameOptions : any = {
    
     debugMode           : true,
@@ -13,5 +16,10 @@ export const GameOptions : any = {
 
     playerSpeed         : 50,       // player speed, in pixels per second
     gravity             : 400,      // game gravity
-    jumpForce           : 200       // player jump force    
+    jumpForce           : 200,       // player jump force
+
+    gameThemeTint : {
+        asNumber : ACCENT_TINT,
+        asString : '#' + ACCENT_TINT.toString(16).padStart(6, '0').toUpperCase(),
+    },
 }

@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import { GameOptions } from '../constants/gameOptions';
 import GameParameters from  '../Shared/gameParameters';
 import GameHelpers from '../Shared/gameHelpers';
 
@@ -21,7 +22,7 @@ export default class PreloaderScene extends Phaser.Scene {
 		var progress = this.add.graphics();
 		this.load.on('progress', function (value : number) {
 			progress.clear();
-			progress.fillStyle(0xD63384, 1);
+			progress.fillStyle(GameOptions.gameThemeTint.asNumber, 1);
 			progress.fillRect(loadingBg.x-(loadingBg.width*0.5)+20, loadingBg.y-(loadingBg.height*0.5)+10, 540 * value, 25);
 		});
 

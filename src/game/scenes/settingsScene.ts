@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import { GameOptions } from '../constants/gameOptions';
 import GameParameters from  '../Shared/gameParameters';
 import Button from '../components/UI/button';
 import GameHelpers from '../Shared/gameHelpers';
@@ -42,9 +43,9 @@ export default class SettingsScene extends Phaser.Scene {
 		this.buttonBack.y = -this.buttonBack.height-20;
 		this.tweens.add({targets: this.buttonBack, y: 20, duration: 500, ease: 'Back'});
 
-		var fontTitle = { font: '46px ' + LanguageHelpers.getText('FONT'), fill: '#D63384', stroke: '#000', strokeThickness: 7, align: 'center' };
-		var fontSubtitle = { font: '38px '+LanguageHelpers.getText('FONT'), fill: '#D63384', stroke: '#000', strokeThickness: 5, align: 'center' };
-		var fontSmall = { font: '28px '+LanguageHelpers.getText('FONT'), fill: '#D63384', stroke: '#000', strokeThickness: 4, align: 'center' };
+		var fontTitle = { font: '46px ' + LanguageHelpers.getText('FONT'), fill: GameOptions.gameThemeTint.asString, stroke: '#000', strokeThickness: 7, align: 'center' };
+		var fontSubtitle = { font: '38px '+LanguageHelpers.getText('FONT'), fill: GameOptions.gameThemeTint.asString, stroke: '#000', strokeThickness: 5, align: 'center' };
+		var fontSmall = { font: '28px '+LanguageHelpers.getText('FONT'), fill: GameOptions.gameThemeTint.asString, stroke: '#000', strokeThickness: 4, align: 'center' };
 		var titleSettings = this.add.text(GameParameters.worldParameters.centerX, 60, LanguageHelpers.getText('settings'), fontTitle);
 		titleSettings.setOrigin(0.5, 0.5);
 		var offsetLeft = 130;

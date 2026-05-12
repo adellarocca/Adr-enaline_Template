@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import { GameOptions } from '../../constants/gameOptions';
 
 export default class Button extends Phaser.GameObjects.Image {
   constructor(
@@ -7,10 +8,15 @@ export default class Button extends Phaser.GameObjects.Image {
     y: number,
     texture: string,
     callback: () => void,
-    noframes: boolean = false
+    noframes: boolean = false,
+    applyThemeTint: boolean = true
   ) {
     // Appeler le constructeur parent
     super(scene, x, y, texture, 0);
+
+    if (applyThemeTint) {
+      this.setTint(GameOptions.gameThemeTint.asNumber);
+    }
 
     // Définir les interactions avec la souris
     this.setInteractive({ useHandCursor: true });

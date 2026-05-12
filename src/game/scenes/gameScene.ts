@@ -56,7 +56,7 @@ export default class GameScene extends Phaser.Scene {
 		this.gamePaused = false;
 		this.runOnce = false;
 
-		this.buttonDummy = new Button(this, GameParameters.worldParameters.centerX, GameParameters.worldParameters.centerY, 'clickme', this.addPoints);
+		this.buttonDummy = new Button(this, GameParameters.worldParameters.centerX, GameParameters.worldParameters.centerY, 'clickme', this.addPoints, false, false);
         this.buttonDummy.setOrigin(0.5,0.5);
         this.buttonDummy.setAlpha(0);
         this.buttonDummy.setScale(0.1);
@@ -250,8 +250,8 @@ export default class GameScene extends Phaser.Scene {
 		const rawHighscore = LocalStorageHelpers.get('APT-highscore');
 		const highscore = typeof rawHighscore === 'number' ? rawHighscore : Number(rawHighscore ?? 0) || 0;
 
-		var fontScore = { font: '38px '+ LanguageHelpers.getText('FONT'), fill: '#D63384', stroke: '#000', strokeThickness: 5 };
-		var fontScoreWhite =  { font: '38px '+ LanguageHelpers.getText('FONT'), fill: '#000', stroke: '#D63384', strokeThickness: 5 };
+		var fontScore = { font: '38px '+ LanguageHelpers.getText('FONT'), fill: GameOptions.gameThemeTint.asString, stroke: '#000', strokeThickness: 5 };
+		var fontScoreWhite =  { font: '38px '+ LanguageHelpers.getText('FONT'), fill: '#000', stroke: GameOptions.gameThemeTint.asString, strokeThickness: 5 };
 
 		this.textHighscore = this.add.text(
 			GameParameters.worldParameters.width - 30,
@@ -279,7 +279,7 @@ export default class GameScene extends Phaser.Scene {
 		this.buttonPause.y = -this.buttonPause.height-20;
         this.tweens.add({targets: this.buttonPause, y: 20, duration: 500, ease: 'Back'});
 
-		var fontTitle = { font: '48px '+ LanguageHelpers.getText('FONT'), fill: '#000', stroke: '#D63384', strokeThickness: 10 };
+		var fontTitle = { font: '48px '+ LanguageHelpers.getText('FONT'), fill: '#000', stroke: GameOptions.gameThemeTint.asString, strokeThickness: 10 };
 
 		this.screenPausedGroup = this.add.group();
         this.screenPausedBg = this.add.sprite(0, 0, 'overlay');
@@ -350,7 +350,7 @@ export default class GameScene extends Phaser.Scene {
         
         var randX = Phaser.Math.Between(200, GameParameters.worldParameters.width-200);
         var randY = Phaser.Math.Between(200, GameParameters.worldParameters.height-200);
-        var fontTitle = { font: '48px '+ LanguageHelpers.getText('FONT'), fill: '#D63384', stroke: '#000', strokeThickness: 10 };
+        var fontTitle = { font: '48px '+ LanguageHelpers.getText('FONT'), fill: GameOptions.gameThemeTint.asString, stroke: '#000', strokeThickness: 10 };
 		var pointsAdded = this.add.text(randX, randY, '+10', fontTitle);
 		pointsAdded.setOrigin(0.5, 0.5);
         this.tweens.add({targets: pointsAdded, alpha: 0, y: randY-50, duration: 1000, ease: 'Linear'});
