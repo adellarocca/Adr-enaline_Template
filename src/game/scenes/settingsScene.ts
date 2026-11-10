@@ -1,28 +1,27 @@
 import * as Phaser from 'phaser';
 import { GameOptions } from '../constants/gameOptions';
-import GameParameters from  '../Shared/gameParameters';
 import Button from '../components/UI/button';
 import GameHelpers from '../Shared/gameHelpers';
-import LocalStorageHelpers from '../Shared/localStorageHelpers';
 import LanguageHelpers from '../Shared/languageHelpers';
 import SFXHelpers from '../Shared/sFXHelpers';
+import { addPanelFill, addStageTile, bindStage, fitPanelFill, fitTile, restPanel, stage } from '../stage';
+
+type SettingsPage = 'settings' | 'credits' | 'keyboard';
 
 export default class SettingsScene extends Phaser.Scene {
 	
-	private screenName: string = 'settings';
-	private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+	private screenName: SettingsPage = 'settings';
 	private buttonBack!: Button;
 	private buttonSound!: Button;
 	private buttonCredits!: Button;
 	private buttonMusic!: Button;
-	private bannerCoin!: Button;
 
 	private containerCredits!: Phaser.GameObjects.Container;
 	private containerKeyboard!: Phaser.GameObjects.Container;
-	private textSound!: any;
-	private textMusic!: any;
-	private textCredits!: any;
-	private helpText!: any;
+	private textSound!: Phaser.GameObjects.Text;
+	private textMusic!: Phaser.GameObjects.Text;
+	private textCredits!: Phaser.GameObjects.Text;
+	private background!: Phaser.GameObjects.TileSprite;
 
     constructor() {
         super('Settings');	
@@ -33,9 +32,8 @@ export default class SettingsScene extends Phaser.Scene {
 
 
 
-		this.add.sprite(0, 0, 'background').setOrigin(0, 0);
+		this.background = addStageTile(this, 'background');
 		
-		this.cursors = this.input.keyboard!.createCursorKeys();   
 		this.input.keyboard!.on('keydown', this.handleKeyBoard, this);		
 
 		this.buttonBack = new Button(this, 20, 20, 'button-back', () =>{this.clickBack('');});
@@ -46,7 +44,7 @@ export default class SettingsScene extends Phaser.Scene {
 		var fontTitle = { font: '46px ' + LanguageHelpers.getText('FONT'), fill: GameOptions.gameThemeTint.asString, stroke: '#000', strokeThickness: 7, align: 'center' };
 		var fontSubtitle = { font: '38px '+LanguageHelpers.getText('FONT'), fill: GameOptions.gameThemeTint.asString, stroke: '#000', strokeThickness: 5, align: 'center' };
 		var fontSmall = { font: '28px '+LanguageHelpers.getText('FONT'), fill: GameOptions.gameThemeTint.asString, stroke: '#000', strokeThickness: 4, align: 'center' };
-		var titleSettings = this.add.text(GameParameters.worldParameters.centerX, 60, LanguageHelpers.getText('settings'), fontTitle);
+		var titleSettings = this.add.text(stage.centerX, 60, LanguageHelpers.getText('settings'), fontTitle);
 		titleSettings.setOrigin(0.5, 0.5);
 		var offsetLeft = 130;
 		
@@ -63,8 +61,8 @@ export default class SettingsScene extends Phaser.Scene {
 		this.textCredits = this.add.text(offsetLeft+30+this.buttonCredits.width, 500, LanguageHelpers.getText('credits'), fontSubtitle);
 		this.textCredits.setOrigin(0, 0.5);
 
-        this.bannerCoin = new Button(this, GameParameters.worldParameters.centerX, GameParameters.worldParameters.height-60, 'banner-coin', this.clickInsertCoin);
-		this.bannerCoin.setOrigin(0.5, 1);		
+        const bannerCoin = new Button(this, stage.centerX, stage.height - 60, 'banner-coin', this.clickInsertCoin);
+		bannerCoin.setOrigin(0.5, 1);		
 
 		SFXHelpers.update('sound', this.buttonSound, this.textSound);
 		SFXHelpers.update('music', this.buttonMusic, this.textMusic);
@@ -83,88 +81,86 @@ export default class SettingsScene extends Phaser.Scene {
 		this.tweens.add({targets: this.textCredits, scaleX: 1, scaleY: 1, duration: 500, delay: 500, ease: 'Cubic.easeOut' });
 
 		if(this.sys.game.device.os.desktop) {
-			this.helpText = this.add.text(GameParameters.worldParameters.centerX, GameParameters.worldParameters.height-250, LanguageHelpers.getText('keyboard-info'), fontSmall);
-			this.helpText.setOrigin(0.5,1);
-			this.helpText.setScale(0.5);
-			this.tweens.add({targets: this.helpText, scaleX: 1, scaleY: 1, duration: 500, delay: 750, ease: 'Cubic.easeOut' });
+			const helpText = this.add.text(stage.centerX, stage.height - 250, LanguageHelpers.getText('keyboard-info'), fontSmall);
+			helpText.setOrigin(0.5, 1);
+			helpText.setScale(0.5);
+			this.tweens.add({ targets: helpText, scaleX: 1, scaleY: 1, duration: 500, delay: 750, ease: 'Cubic.easeOut' });
 		}
 
 		var offsetTopCredits = 20;
 		var offsetTopCrew = 550;
-		this.containerCredits = this.add.container(0, GameParameters.worldParameters.height);
-		var creditsBg = this.add.sprite(0, 0, 'background');
-		creditsBg.setOrigin(0, 0);
+		this.containerCredits = this.add.container(0, stage.height);
+		const creditsBg = addPanelFill(this);
 		var creditsBack = new Button(this, 20, 20, 'button-back', () =>{this.clickBack('credits');});
 		creditsBack.setOrigin(0, 0);
 
-		var titleCredits = this.add.text(GameParameters.worldParameters.centerX, offsetTopCredits+40, LanguageHelpers.getText('credits'), fontTitle);
+		var titleCredits = this.add.text(stage.centerX, offsetTopCredits+40, LanguageHelpers.getText('credits'), fontTitle);
 		titleCredits.setOrigin(0.5);
-		var titleCreditsText = this.add.text(GameParameters.worldParameters.centerX, offsetTopCredits+170, LanguageHelpers.getText('madeby'), fontSubtitle);
+		var titleCreditsText = this.add.text(stage.centerX, offsetTopCredits+170, LanguageHelpers.getText('madeby'), fontSubtitle);
 		titleCreditsText.setOrigin(0.5,0);
-		var titleCreditsLogo = new Button(this, GameParameters.worldParameters.centerX, offsetTopCredits+270, 'logo', this.clickAdrenaline).setScale(0.5, 0.5);;
+		var titleCreditsLogo = new Button(this, stage.centerX, offsetTopCredits+270, 'logo', this.clickAdrenaline).setScale(0.5, 0.5);;
 		titleCreditsLogo.setOrigin(0.5,0);
-		var titleCreditsUrl = this.add.text(GameParameters.worldParameters.centerX, offsetTopCredits+400, 'adr-enaline.com', fontSubtitle);
+		var titleCreditsUrl = this.add.text(stage.centerX, offsetTopCredits+400, 'adr-enaline.com', fontSubtitle);
 		titleCreditsUrl.setOrigin(0.5,0);
 		titleCreditsUrl.setInteractive({ useHandCursor: true });
 		titleCreditsUrl.on('pointerdown', () => { this.clickAdrenaline(); }, this);
 
-		var titleCrew = this.add.text(GameParameters.worldParameters.centerX, offsetTopCrew, LanguageHelpers.getText('team'), fontSubtitle);
+		var titleCrew = this.add.text(stage.centerX, offsetTopCrew, LanguageHelpers.getText('team'), fontSubtitle);
 		titleCrew.setOrigin(0.5,0);
-		var titleCrewAndrzej = this.add.text(GameParameters.worldParameters.centerX, offsetTopCrew+80, 'T0dl4b4l - '+LanguageHelpers.getText('coding'), fontSubtitle);
+		var titleCrewAndrzej = this.add.text(stage.centerX, offsetTopCrew+80, 'T0dl4b4l - '+LanguageHelpers.getText('coding'), fontSubtitle);
 		titleCrewAndrzej.setOrigin(0.5,0);
-		var titleCreditsMusic = this.add.text(GameParameters.worldParameters.centerX, offsetTopCrew+320, LanguageHelpers.getText('musicby')+' Kenney', fontSubtitle);
+		var titleCreditsMusic = this.add.text(stage.centerX, offsetTopCrew+320, LanguageHelpers.getText('musicby')+' Kenney', fontSubtitle);
 		titleCreditsMusic.setOrigin(0.5,0);
 
 		this.containerCredits.add([creditsBg,creditsBack,titleCredits,titleCreditsText,titleCreditsLogo,titleCreditsUrl]);
 		this.containerCredits.add([titleCrew,titleCrewAndrzej,titleCreditsMusic]);
 
 		this.containerKeyboard = this.add.container();
-		this.containerKeyboard.y = GameParameters.worldParameters.height;
+		this.containerKeyboard.y = stage.height;
 		
 		var offsetTopKeyboard = 20;
-		var keyboardBg = this.add.sprite(0, 0, 'background');
-		keyboardBg.setOrigin(0,0);
-		var titleKeyboard = this.add.text(GameParameters.worldParameters.centerX, offsetTopKeyboard+40, LanguageHelpers.getText('key-title'), fontTitle);
+		const keyboardBg = addPanelFill(this);
+		var titleKeyboard = this.add.text(stage.centerX, offsetTopKeyboard+40, LanguageHelpers.getText('key-title'), fontTitle);
 		titleKeyboard.setOrigin(0.5);
-		var titleKeySettingsTitle = this.add.text(GameParameters.worldParameters.centerX, offsetTopKeyboard+90, LanguageHelpers.getText('key-settings-title'), fontSubtitle);
+		var titleKeySettingsTitle = this.add.text(stage.centerX, offsetTopKeyboard+90, LanguageHelpers.getText('key-settings-title'), fontSubtitle);
 		titleKeySettingsTitle.setOrigin(0.5,0);
-		var titleKeySettings = this.add.text(GameParameters.worldParameters.centerX, offsetTopKeyboard+140, LanguageHelpers.getText('key-settings-onoff'), fontSmall);
+		var titleKeySettings = this.add.text(stage.centerX, offsetTopKeyboard+140, LanguageHelpers.getText('key-settings-onoff'), fontSmall);
 		titleKeySettings.setOrigin(0.5,0);
-		var titleKeyAudio = this.add.text(GameParameters.worldParameters.centerX, offsetTopKeyboard+180, LanguageHelpers.getText('key-audio'), fontSmall);
+		var titleKeyAudio = this.add.text(stage.centerX, offsetTopKeyboard+180, LanguageHelpers.getText('key-audio'), fontSmall);
 		titleKeyAudio.setOrigin(0.5,0);
-		var titleKeyMusic = this.add.text(GameParameters.worldParameters.centerX, offsetTopKeyboard+220, LanguageHelpers.getText('key-music'), fontSmall);
+		var titleKeyMusic = this.add.text(stage.centerX, offsetTopKeyboard+220, LanguageHelpers.getText('key-music'), fontSmall);
 		titleKeyMusic.setOrigin(0.5,0);
-		var titleKeyCredits = this.add.text(GameParameters.worldParameters.centerX, offsetTopKeyboard+260, LanguageHelpers.getText('key-credits'), fontSmall);
+		var titleKeyCredits = this.add.text(stage.centerX, offsetTopKeyboard+260, LanguageHelpers.getText('key-credits'), fontSmall);
 		titleKeyCredits.setOrigin(0.5,0);
-		var titleKeyKeyboard = this.add.text(GameParameters.worldParameters.centerX, offsetTopKeyboard+300, LanguageHelpers.getText('key-shortcuts'), fontSmall);
+		var titleKeyKeyboard = this.add.text(stage.centerX, offsetTopKeyboard+300, LanguageHelpers.getText('key-shortcuts'), fontSmall);
 		titleKeyKeyboard.setOrigin(0.5,0);
 
-		var titleKeyMenuTitle = this.add.text(GameParameters.worldParameters.centerX, offsetTopKeyboard+350, LanguageHelpers.getText('key-menu'), fontSubtitle);
+		var titleKeyMenuTitle = this.add.text(stage.centerX, offsetTopKeyboard+350, LanguageHelpers.getText('key-menu'), fontSubtitle);
 		titleKeyMenuTitle.setOrigin(0.5,0);
-		var titleKeySettings2 = this.add.text(GameParameters.worldParameters.centerX, offsetTopKeyboard+400, LanguageHelpers.getText('key-settings-onoff'), fontSmall);
+		var titleKeySettings2 = this.add.text(stage.centerX, offsetTopKeyboard+400, LanguageHelpers.getText('key-settings-onoff'), fontSmall);
 		titleKeySettings2.setOrigin(0.5,0);
-		var titleKeyStart = this.add.text(GameParameters.worldParameters.centerX, offsetTopKeyboard+440, LanguageHelpers.getText('key-start'), fontSmall);
+		var titleKeyStart = this.add.text(stage.centerX, offsetTopKeyboard+440, LanguageHelpers.getText('key-start'), fontSmall);
 		titleKeyStart.setOrigin(0.5,0);
 
-		var titleKeyGameTitle = this.add.text(GameParameters.worldParameters.centerX, offsetTopKeyboard+490, LanguageHelpers.getText('key-gameplay'), fontSubtitle);
+		var titleKeyGameTitle = this.add.text(stage.centerX, offsetTopKeyboard+490, LanguageHelpers.getText('key-gameplay'), fontSubtitle);
 		titleKeyGameTitle.setOrigin(0.5,0);
-		var titleKeyButton = this.add.text(GameParameters.worldParameters.centerX, offsetTopKeyboard+540, LanguageHelpers.getText('key-button'), fontSmall);
+		var titleKeyButton = this.add.text(stage.centerX, offsetTopKeyboard+540, LanguageHelpers.getText('key-button'), fontSmall);
 		titleKeyButton.setOrigin(0.5,0);
-		var titleKeyPause = this.add.text(GameParameters.worldParameters.centerX, offsetTopKeyboard+580, LanguageHelpers.getText('key-pause'), fontSmall);
+		var titleKeyPause = this.add.text(stage.centerX, offsetTopKeyboard+580, LanguageHelpers.getText('key-pause'), fontSmall);
 		titleKeyPause.setOrigin(0.5,0);
 
-		var titleKeyPauseTitle = this.add.text(GameParameters.worldParameters.centerX, offsetTopKeyboard+630, LanguageHelpers.getText('key-pause-title'), fontSubtitle);
+		var titleKeyPauseTitle = this.add.text(stage.centerX, offsetTopKeyboard+630, LanguageHelpers.getText('key-pause-title'), fontSubtitle);
 		titleKeyPauseTitle.setOrigin(0.5,0);
-		var titleKeyBack = this.add.text(GameParameters.worldParameters.centerX, offsetTopKeyboard+680, LanguageHelpers.getText('key-back'), fontSmall);
+		var titleKeyBack = this.add.text(stage.centerX, offsetTopKeyboard+680, LanguageHelpers.getText('key-back'), fontSmall);
 		titleKeyBack.setOrigin(0.5,0);
-		var titleKeyRestart = this.add.text(GameParameters.worldParameters.centerX, offsetTopKeyboard+720, LanguageHelpers.getText('key-return'), fontSmall);
+		var titleKeyRestart = this.add.text(stage.centerX, offsetTopKeyboard+720, LanguageHelpers.getText('key-return'), fontSmall);
 		titleKeyRestart.setOrigin(0.5,0);
 
-		var titleKeyOverTitle = this.add.text(GameParameters.worldParameters.centerX, offsetTopKeyboard+770, LanguageHelpers.getText('key-gameover'), fontSubtitle);
+		var titleKeyOverTitle = this.add.text(stage.centerX, offsetTopKeyboard+770, LanguageHelpers.getText('key-gameover'), fontSubtitle);
 		titleKeyOverTitle.setOrigin(0.5,0);
-		var titleKeyBack2 = this.add.text(GameParameters.worldParameters.centerX, offsetTopKeyboard+820, LanguageHelpers.getText('key-back'), fontSmall);
+		var titleKeyBack2 = this.add.text(stage.centerX, offsetTopKeyboard+820, LanguageHelpers.getText('key-back'), fontSmall);
 		titleKeyBack2.setOrigin(0.5,0);
-		var titleKeyRestart2 = this.add.text(GameParameters.worldParameters.centerX, offsetTopKeyboard+860, LanguageHelpers.getText('key-try'), fontSmall);
+		var titleKeyRestart2 = this.add.text(stage.centerX, offsetTopKeyboard+860, LanguageHelpers.getText('key-try'), fontSmall);
 		titleKeyRestart2.setOrigin(0.5,0);
 
 		this.containerKeyboard.add([keyboardBg,titleKeyboard,titleKeySettingsTitle,titleKeySettings]);
@@ -174,7 +170,20 @@ export default class SettingsScene extends Phaser.Scene {
 		this.containerKeyboard.add([titleKeyRestart,titleKeyOverTitle,titleKeyBack2,titleKeyRestart2]);
 
 		this.cameras.main.fadeIn(250);
+		bindStage(this, (layout) => this.refit(layout.visible));
 	};
+
+	/** The hex pattern covers the whole screen. A closed panel waits just past the bottom of it. */
+	private refit(visible: Phaser.Geom.Rectangle): void {
+		fitTile(this.background, visible);
+		fitPanelFill(this.containerCredits, visible);
+		fitPanelFill(this.containerKeyboard, visible);
+		if (this.screenName !== 'settings') {
+			return;
+		}
+		restPanel(this.containerCredits, visible.height, this.tweens.isTweening(this.containerCredits));
+		restPanel(this.containerKeyboard, visible.height, this.tweens.isTweening(this.containerKeyboard));
+	}
 
     handleKeyBoard(e: KeyboardEvent) {
         switch(e.code) {
@@ -257,10 +266,10 @@ export default class SettingsScene extends Phaser.Scene {
 			this.buttonMusic.input!.enabled = true;
 			this.buttonCredits.input!.enabled = true;
 			if(name == 'credits') {
-				this.tweens.add({targets: this.containerCredits, y: GameParameters.worldParameters.height, duration: 750, ease: 'Cubic.easeIn' });
+				this.tweens.add({targets: this.containerCredits, y: this.cameras.main.worldView.height, duration: 750, ease: 'Cubic.easeIn' });
 			}
 			else if(name == 'keyboard') {
-				this.tweens.add({targets: this.containerKeyboard, y: GameParameters.worldParameters.height, duration: 750, ease: 'Cubic.easeIn' });
+				this.tweens.add({targets: this.containerKeyboard, y: this.cameras.main.worldView.height, duration: 750, ease: 'Cubic.easeIn' });
 			}
 			this.screenName = 'settings';
 		}

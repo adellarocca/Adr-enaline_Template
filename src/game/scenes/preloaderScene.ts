@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser';
 import { GameOptions } from '../constants/gameOptions';
-import GameParameters from  '../Shared/gameParameters';
 import GameHelpers from '../Shared/gameHelpers';
+import { addStageTile, bindStage, fitTile, stage } from '../stage';
 
 
 export default class PreloaderScene extends Phaser.Scene {
@@ -13,13 +13,15 @@ export default class PreloaderScene extends Phaser.Scene {
         const assetsBase = (import.meta.env.VITE_APP_ASSETS_BASE_URL as string) || 'assets/';
         this.load.baseURL = `${import.meta.env.BASE_URL}${assetsBase}`;
 
-		this.add.sprite(0, 0, 'background').setOrigin(0, 0);
-        var logoAdrenaline = this.add.sprite(GameParameters.worldParameters.centerX, GameParameters.worldParameters.centerY-100, 'logo');
-        logoAdrenaline.setOrigin(0.5, 0.5);
-		var loadingBg = this.add.sprite(GameParameters.worldParameters.centerX, GameParameters.worldParameters.centerY+100, 'loading-background');
-		loadingBg.setOrigin(0.5, 0.5);
+        const background = addStageTile(this, 'background');
+        bindStage(this, (layout) => fitTile(background, layout.visible));
 
-		var progress = this.add.graphics();
+        const logoAdrenaline = this.add.sprite(stage.centerX, stage.centerY - 100, 'logo');
+        logoAdrenaline.setOrigin(0.5, 0.5);
+        const loadingBg = this.add.sprite(stage.centerX, stage.centerY + 100, 'loading-background');
+        loadingBg.setOrigin(0.5, 0.5);
+
+        const progress = this.add.graphics();
 		this.load.on('progress', function (value : number) {
 			progress.clear();
 			progress.fillStyle(GameOptions.gameThemeTint.asNumber, 1);

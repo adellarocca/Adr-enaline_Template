@@ -1,11 +1,13 @@
 import * as Phaser from 'phaser';
 import { GameOptions } from '../constants/gameOptions';
-import GameParameters from  '../Shared/gameParameters';
 import Button from '../components/UI/button';
 import GameHelpers from '../Shared/gameHelpers';
 import LocalStorageHelpers from '../Shared/localStorageHelpers';
 import LanguageHelpers from '../Shared/languageHelpers';
 import SFXHelpers from '../Shared/sFXHelpers';
+import { addStageTile, bindStage, fitTiles, stage } from '../stage';
+
+type GamePhase = 'start' | 'playing' | 'paused' | 'gameover';
 
 
 export default class GameScene extends Phaser.Scene {
@@ -17,7 +19,8 @@ export default class GameScene extends Phaser.Scene {
 	private startButtonPlay!: Button;
 	private startButtonSettings!: Button;
 	private startGroup!: Phaser.GameObjects.Group;
-	private startBg!: Phaser.GameObjects.Sprite;
+	private background!: Phaser.GameObjects.TileSprite;
+	private startBg!: Phaser.GameObjects.TileSprite;
     private screenGameoverBack! : Button;
     private screenGameoverRestart! : Button;
 
@@ -31,12 +34,12 @@ export default class GameScene extends Phaser.Scene {
     private screenGameoverGroup! : Phaser.GameObjects.Group;
     private pointsTween!: Phaser.Tweens.Tween;
     private screenPausedText!: Phaser.GameObjects.Text;
-    private screenPausedBg! : Phaser.GameObjects.Sprite;
-    private screenGameoverBg! : Phaser.GameObjects.Sprite;
+    private screenPausedBg! : Phaser.GameObjects.TileSprite;
+    private screenGameoverBg! : Phaser.GameObjects.TileSprite;
     private screenGameoverText!: Phaser.GameObjects.Text;
 	private startTitle!: Phaser.GameObjects.Sprite;
 
-    private stateStatus : string | null = null;
+    private phase: GamePhase = 'start';
     private score! : number;
     private timeMax! : number;
     private gamePaused! : boolean;
@@ -49,14 +52,14 @@ export default class GameScene extends Phaser.Scene {
 		SFXHelpers.manage('music', 'init', this);
 		SFXHelpers.manage('sound', 'init', this);
 
-        this.add.sprite(0, 0, 'background').setOrigin(0,0);
-        this.stateStatus = 'start';
+        this.background = addStageTile(this, 'background');
+        this.phase = 'start';
         this.score = 0;
         this.timeMax = GameOptions.gameTimeMax;
 		this.gamePaused = false;
 		this.runOnce = false;
 
-		this.buttonDummy = new Button(this, GameParameters.worldParameters.centerX, GameParameters.worldParameters.centerY, 'clickme', this.addPoints, false, false);
+		this.buttonDummy = new Button(this, stage.centerX, stage.centerY, 'clickme', this.addPoints, false, false);
         this.buttonDummy.setOrigin(0.5,0.5);
         this.buttonDummy.setAlpha(0);
         this.buttonDummy.setScale(0.1);
@@ -82,7 +85,7 @@ export default class GameScene extends Phaser.Scene {
                 this.textTime.setText(LanguageHelpers.getText('gameplay-timeleft')+this.timeMax);
                 if(!this.timeMax) {
                     this.runOnce = false;
-                    this.stateStatus = 'gameover';
+                    this.phase = 'gameover';
                 }
             },
             callbackScope: this,
@@ -92,9 +95,15 @@ export default class GameScene extends Phaser.Scene {
 
 		this.input.keyboard!.on('keydown', this.handleKey, this);
         this.cameras.main.fadeIn(250);
+        bindStage(this, (layout) => this.refit(layout.visible));
     };
+
+    /** Full-screen tiles follow the visible world. Interface objects stay on the stage. */
+    private refit(visible: Phaser.Geom.Rectangle): void {
+        fitTiles(visible, [this.background, this.startBg, this.screenPausedBg, this.screenGameoverBg]);
+    }
 	update() {
-		switch(this.stateStatus) {
+		switch(this.phase) {
 			case 'start': {
 				this.stateStart();
 				break;
@@ -124,8 +133,8 @@ export default class GameScene extends Phaser.Scene {
 
 	moveImageToRandomPosition() {		
 		const buttonSize = this.buttonDummy.width;
-		const randomX = Phaser.Math.Between(buttonSize, GameParameters.worldParameters.width - buttonSize); 
-		const randomY = Phaser.Math.Between(buttonSize, GameParameters.worldParameters.height - buttonSize); 	
+		const randomX = Phaser.Math.Between(buttonSize, stage.width - buttonSize); 
+		const randomY = Phaser.Math.Between(buttonSize, stage.height - buttonSize); 	
 		
 		this.buttonDummy.setPosition(randomX, randomY);
 	};
@@ -133,7 +142,7 @@ export default class GameScene extends Phaser.Scene {
     handleKey(e : KeyboardEvent) {
         switch(e.code) {
             case 'Enter': {
-				if(this.stateStatus === 'start') {
+				if(this.phase === 'start') {
 					this.clickStart();
 				}
 				else {
@@ -167,7 +176,7 @@ export default class GameScene extends Phaser.Scene {
 		this.buttonDummy.input!.enabled = true;
 		this.currentTimer.paused = false;
 		this.moveTimer.paused = false;
-		this.stateStatus = 'playing';
+		this.phase = 'playing';
 		this.runOnce = false;
 	}
 
@@ -177,7 +186,7 @@ export default class GameScene extends Phaser.Scene {
 	}
 
     managePause() {
-		if(this.stateStatus !== 'playing' && this.stateStatus !== 'paused') {
+		if(this.phase !== 'playing' && this.phase !== 'paused') {
 			return;
 		}
         this.gamePaused = !this.gamePaused;
@@ -188,31 +197,31 @@ export default class GameScene extends Phaser.Scene {
 			GameHelpers.fadeOutIn(() => {
 				this.buttonPause.input!.enabled = false;
 				this.buttonDummy.input!.enabled = false;
-				this.stateStatus = 'paused';				
+				this.phase = 'paused';				
 			}, this);
             this.runOnce = false;
 			this.screenPausedBack.x = -this.screenPausedBack.width-20;
 			this.tweens.add({targets: this.screenPausedBack, x: 100, duration: 500, delay: 250, ease: 'Back'});
-			this.screenPausedContinue.x = GameParameters.worldParameters.width+this.screenPausedContinue.width+20;
-			this.tweens.add({targets: this.screenPausedContinue, x: GameParameters.worldParameters.width-100, duration: 500, delay: 250, ease: 'Back'});
+			this.screenPausedContinue.x = stage.width+this.screenPausedContinue.width+20;
+			this.tweens.add({targets: this.screenPausedContinue, x: stage.width-100, duration: 500, delay: 250, ease: 'Back'});
 		}
 		else {
 			GameHelpers.fadeOutIn(() => {
 				this.buttonPause.input!.enabled = true;
 				this.buttonDummy.input!.enabled = true;
-				this.stateStatus = 'playing';				
+				this.phase = 'playing';				
 			}, this);
             this.runOnce = false;
 			this.screenPausedBack.x = 100;
 			this.tweens.add({targets: this.screenPausedBack, x: -this.screenPausedBack.width-20, duration: 500, ease: 'Back'});
-			this.screenPausedContinue.x = GameParameters.worldParameters.width-100;
-			this.tweens.add({targets: this.screenPausedContinue, x: GameParameters.worldParameters.width+this.screenPausedContinue.width+20, duration: 500, ease: 'Back'});
+			this.screenPausedContinue.x = stage.width-100;
+			this.tweens.add({targets: this.screenPausedContinue, x: stage.width+this.screenPausedContinue.width+20, duration: 500, ease: 'Back'});
         }
     };
 	statePlaying() {
         if(this.timeMax === 0) {
             this.runOnce = false;
-            this.stateStatus = 'gameover';
+            this.phase = 'gameover';
         }
 	};
 
@@ -237,8 +246,8 @@ export default class GameScene extends Phaser.Scene {
 		}, this);
 		this.screenGameoverBack.x = -this.screenGameoverBack.width-20;
 		this.tweens.add({targets: this.screenGameoverBack, x: 100, duration: 500, delay: 250, ease: 'Back'});
-		this.screenGameoverRestart.x = GameParameters.worldParameters.width+this.screenGameoverRestart.width+20;
-		this.tweens.add({targets: this.screenGameoverRestart, x: GameParameters.worldParameters.width-100, duration: 500, delay: 250, ease: 'Back'});
+		this.screenGameoverRestart.x = stage.width+this.screenGameoverRestart.width+20;
+		this.tweens.add({targets: this.screenGameoverRestart, x: stage.width-100, duration: 500, delay: 250, ease: 'Back'});
 	};
 
     initUI() {
@@ -254,14 +263,14 @@ export default class GameScene extends Phaser.Scene {
 		var fontScoreWhite =  { font: '38px '+ LanguageHelpers.getText('FONT'), fill: '#000', stroke: GameOptions.gameThemeTint.asString, strokeThickness: 5 };
 
 		this.textHighscore = this.add.text(
-			GameParameters.worldParameters.width - 30,
+			stage.width - 30,
 			45,
 			LanguageHelpers.getText('menu-highscore') + highscore,
 			fontScore
 		);
 		this.textHighscore.setOrigin(1, 0);
 
-		this.textScore = this.add.text(GameParameters.worldParameters.width-30, 95, LanguageHelpers.getText('gameplay-score')+this.score, fontScore);
+		this.textScore = this.add.text(stage.width-30, 95, LanguageHelpers.getText('gameplay-score')+this.score, fontScore);
 		this.textScore.setOrigin(1,0);
 
 		this.textHighscore.y = -this.textHighscore.height-20;
@@ -270,11 +279,11 @@ export default class GameScene extends Phaser.Scene {
 		this.textScore.y = -this.textScore.height-20;
 		this.tweens.add({targets: this.textScore, y: 95, duration: 500, delay: 150, ease: 'Back'});
 
-		this.textTime = this.add.text(30, GameParameters.worldParameters.height-30, LanguageHelpers.getText('gameplay-timeleft')+this.timeMax, fontScore);
+		this.textTime = this.add.text(30, stage.height-30, LanguageHelpers.getText('gameplay-timeleft')+this.timeMax, fontScore);
 		this.textTime.setOrigin(0,1);
 
-		this.textTime.y = GameParameters.worldParameters.height+this.textTime.height+30;
-		this.tweens.add({targets: this.textTime, y: GameParameters.worldParameters.height-30, duration: 500, ease: 'Back'});		
+		this.textTime.y = stage.height+this.textTime.height+30;
+		this.tweens.add({targets: this.textTime, y: stage.height-30, duration: 500, ease: 'Back'});		
 
 		this.buttonPause.y = -this.buttonPause.height-20;
         this.tweens.add({targets: this.buttonPause, y: 20, duration: 500, ease: 'Back'});
@@ -282,14 +291,13 @@ export default class GameScene extends Phaser.Scene {
 		var fontTitle = { font: '48px '+ LanguageHelpers.getText('FONT'), fill: '#000', stroke: GameOptions.gameThemeTint.asString, strokeThickness: 10 };
 
 		this.screenPausedGroup = this.add.group();
-        this.screenPausedBg = this.add.sprite(0, 0, 'overlay');
+        this.screenPausedBg = addStageTile(this, 'overlay');
         this.screenPausedBg.setAlpha(0.95);
-        this.screenPausedBg.setOrigin(0, 0);
-		this.screenPausedText = this.add.text(GameParameters.worldParameters.centerX, 100, LanguageHelpers.getText('gameplay-paused'), fontTitle);
+		this.screenPausedText = this.add.text(stage.centerX, 100, LanguageHelpers.getText('gameplay-paused'), fontTitle);
 		this.screenPausedText.setOrigin(0.5,0);
-		this.screenPausedBack = new Button(this, 100, GameParameters.worldParameters.height-100, 'button-mainmenu', this.stateBack);
+		this.screenPausedBack = new Button(this, 100, stage.height-100, 'button-mainmenu', this.stateBack);
 		this.screenPausedBack.setOrigin(0,1);
-		this.screenPausedContinue = new Button(this, GameParameters.worldParameters.width-100, GameParameters.worldParameters.height-100, 'button-continue', this.managePause);
+		this.screenPausedContinue = new Button(this, stage.width-100, stage.height-100, 'button-continue', this.managePause);
 		this.screenPausedContinue.setOrigin(1,1);
 		this.screenPausedGroup.add(this.screenPausedBg);
 		this.screenPausedGroup.add(this.screenPausedText);
@@ -298,16 +306,15 @@ export default class GameScene extends Phaser.Scene {
         this.screenPausedGroup.toggleVisible();
 
 		this.screenGameoverGroup = this.add.group();
-        this.screenGameoverBg = this.add.sprite(0, 0, 'overlay');
+        this.screenGameoverBg = addStageTile(this, 'overlay');
         this.screenGameoverBg.setAlpha(0.95);
-        this.screenGameoverBg.setOrigin(0, 0);
-		this.screenGameoverText = this.add.text(GameParameters.worldParameters.centerX, 100, LanguageHelpers.getText('gameplay-gameover'), fontTitle);
+		this.screenGameoverText = this.add.text(stage.centerX, 100, LanguageHelpers.getText('gameplay-gameover'), fontTitle);
 		this.screenGameoverText.setOrigin(0.5,0);
-		this.screenGameoverBack = new Button(this, 100, GameParameters.worldParameters.height-100, 'button-mainmenu', this.stateBack);
+		this.screenGameoverBack = new Button(this, 100, stage.height-100, 'button-mainmenu', this.stateBack);
 		this.screenGameoverBack.setOrigin(0,1);
-		this.screenGameoverRestart = new Button(this, GameParameters.worldParameters.width-100, GameParameters.worldParameters.height-100, 'button-restart', this.stateRestart);
+		this.screenGameoverRestart = new Button(this, stage.width-100, stage.height-100, 'button-restart', this.stateRestart);
 		this.screenGameoverRestart.setOrigin(1,1);
-		this.screenGameoverScore = this.add.text(GameParameters.worldParameters.centerX, 300, LanguageHelpers.getText('gameplay-score')+this.score, fontScoreWhite);
+		this.screenGameoverScore = this.add.text(stage.centerX, 300, LanguageHelpers.getText('gameplay-score')+this.score, fontScoreWhite);
 		this.screenGameoverScore.setOrigin(0.5,0.5);
 		this.screenGameoverGroup.add(this.screenGameoverBg);
 		this.screenGameoverGroup.add(this.screenGameoverText);
@@ -319,17 +326,16 @@ export default class GameScene extends Phaser.Scene {
 
 	initStartOverlay() {
 		this.startGroup = this.add.group();
-		this.startBg = this.add.sprite(0, 0, 'overlay');
+		this.startBg = addStageTile(this, 'overlay');
 		this.startBg.setAlpha(0.6);
-		this.startBg.setOrigin(0, 0);
 
-		this.startTitle = this.add.sprite(GameParameters.worldParameters.centerX, GameParameters.worldParameters.centerY - 50, 'title');
+		this.startTitle = this.add.sprite(stage.centerX, stage.centerY - 50, 'title');
 		this.startTitle.setOrigin(0.5);
 
 		this.startButtonSettings = new Button(this, 20, 20, 'button-settings', this.clickSettings);
 		this.startButtonSettings.setOrigin(0, 0);
 
-		this.startButtonPlay = new Button(this, GameParameters.worldParameters.width-20, GameParameters.worldParameters.height-20, 'button-start', this.clickStart);
+		this.startButtonPlay = new Button(this, stage.width-20, stage.height-20, 'button-start', this.clickStart);
 		this.startButtonPlay.setOrigin(1, 1);
 
 		this.startGroup.add(this.startBg);
@@ -348,8 +354,8 @@ export default class GameScene extends Phaser.Scene {
 		this.score += 10;
         this.textScore.setText(LanguageHelpers.getText('gameplay-score')+this.score);
         
-        var randX = Phaser.Math.Between(200, GameParameters.worldParameters.width-200);
-        var randY = Phaser.Math.Between(200, GameParameters.worldParameters.height-200);
+        var randX = Phaser.Math.Between(200, stage.width-200);
+        var randY = Phaser.Math.Between(200, stage.height-200);
         var fontTitle = { font: '48px '+ LanguageHelpers.getText('FONT'), fill: GameOptions.gameThemeTint.asString, stroke: '#000', strokeThickness: 10 };
 		var pointsAdded = this.add.text(randX, randY, '+10', fontTitle);
 		pointsAdded.setOrigin(0.5, 0.5);

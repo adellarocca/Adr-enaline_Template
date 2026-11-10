@@ -1,25 +1,33 @@
-/** Single source of truth for the general game / UI accent (Phaser APIs use numbers; text/CSS-style APIs use hex strings). */
+/** Accent shared by the UI. Phaser tints take a number; text styles take a hex string. */
 export const ACCENT_TINT = 0xd63384;
 
-export const GameOptions : any = {
-   
-    debugMode           : true,
+const accentHex = `#${ACCENT_TINT.toString(16).padStart(6, '0').toUpperCase()}`;
 
-    gameSize : {
-        width           : 640,      // width of the game, in pixels
-        height          : 1050       // height of the game, in pixels
+/**
+ * Fixed configuration.
+ * `gameSize` is both the EXPAND base size, in game pixels, and the stage, in world units.
+ * One canvas side stays at this size. The other grows to fill the screen.
+ */
+export const GameOptions = {
+    debugMode: true,
+    gameSize: {
+        width: 640,
+        height: 1050,
     },
-    
-    gameTimeMax         : 10,       // game timer max value
-
-    gameBackgroundColor : 0x000000, // game background color
-
-    playerSpeed         : 50,       // player speed, in pixels per second
-    gravity             : 400,      // game gravity
-    jumpForce           : 200,       // player jump force
-
-    gameThemeTint : {
-        asNumber : ACCENT_TINT,
-        asString : '#' + ACCENT_TINT.toString(16).padStart(6, '0').toUpperCase(),
+    /** Free space around the stage, in world units. Zero keeps the stage flush on the short side. */
+    stageMargin: 0,
+    /** Shown around the stage when the screen is wider or taller than the stage. Matches the hex pattern. */
+    backdropColor: 0xededed,
+    /** Game timer max value, in seconds. */
+    gameTimeMax: 10,
+    /** Player speed, in pixels per second. */
+    playerSpeed: 50,
+    /** Game gravity. */
+    gravity: 400,
+    /** Player jump force. */
+    jumpForce: 200,
+    gameThemeTint: {
+        asNumber: ACCENT_TINT,
+        asString: accentHex,
     },
-}
+} as const;

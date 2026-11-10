@@ -1,5 +1,4 @@
 import * as Phaser from 'phaser';
-import GameParameters from  '../Shared/gameParameters';
 import LanguageHelpers from '../Shared/languageHelpers';
 
 export default class BootScene extends Phaser.Scene {
@@ -17,15 +16,7 @@ export default class BootScene extends Phaser.Scene {
     };
 
     create() {
-        GameParameters.worldParameters = {
-            width: this.cameras.main.width,
-            height: this.cameras.main.height,
-            centerX: this.cameras.main.centerX,
-            centerY: this.cameras.main.centerY            
-        };
-
-        LanguageHelpers.updateLanguage('en');        
-
+        LanguageHelpers.updateLanguage('en');
         this.scene.start('Preloader');
     };
 }

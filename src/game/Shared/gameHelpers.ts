@@ -5,19 +5,18 @@ export default class GameHelpers {
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
   
-    static fadeOutIn = function(passedCallback : Function, scene : Phaser.Scene) {
+    static fadeOutIn(passedCallback: (scene: Phaser.Scene) => void, scene: Phaser.Scene): void {
       scene.cameras.main.fadeOut(250);
       scene.time.addEvent({
         delay: 250,
-        callback: function() {
+        callback: () => {
           scene.cameras.main.fadeIn(250);
           passedCallback(scene);
         },
-        callbackScope: scene
-      });  
+      });
     };
-    
-    static fadeOutScene = function(nextSceneName: string, scene: Phaser.Scene) {
+
+    static fadeOutScene(nextSceneName: string, scene: Phaser.Scene): void {
       scene.cameras.main.fadeOut(250);
       scene.time.addEvent({
           delay: 250,

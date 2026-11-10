@@ -1,16 +1,37 @@
-body {
+html, body {
     margin: 0;
     padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
     color: rgba(255, 255, 255, 0.87);
-    background-color: #0f0f0f;
+    background-color: #ededed;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    overscroll-behavior: none;
 }
 
 #app {
     width: 100%;
-    height: 100vh;
+    height: 100%;
     overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: #ccc url(assets/background/pattern.png) repeat; overflow:hidden;
+    background: #ededed;
+}
+
+/*
+ * EXPAND measures this element. It has to be the screen itself:
+ * a container that only grows with the canvas makes the page scroll,
+ * and 100vh on iOS includes the address bar.
+ */
+#game-container {
+    position: fixed;
+    inset: 0;
+    touch-action: none;
+}
+
+#game-container canvas {
+    display: block;
+    touch-action: none;
 }
